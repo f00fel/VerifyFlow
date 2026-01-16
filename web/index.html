@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>VerifyFlow — проверка DOCX/PDF</title>
+  <meta name="description" content="VerifyFlow проверяет DOCX/PDF по базовым правилам оформления: сводка, карточки ошибок, рекомендации."/>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.12);
+      --text:#e9eeff;
+      --muted:rgba(233,238,255,.72);
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --r:18px;
+      --r2:22px;
+      --accent:#7c5cff;
+      --accent2:#23d5ab;
+
+      --critical:#ff5c7a;
+      --warning:#ffcc66;
+      --info:#7cbcff;
+      --ok:#23d5ab;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(124,92,255,.25), transparent 60%),
+        radial-gradient(900px 600px at 90% 30%, rgba(35,213,171,.14), transparent 55%),
+        var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit}
+    .wrap{max-width:980px; margin:0 auto; padding:28px;}
+    .top{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    h1{margin:0; letter-spacing:-.4px}
+    .muted{color:var(--muted)}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 10px; border-radius:999px;
+      background:rgba(255,255,255,.06); border:1px solid var(--line);
+      color:var(--muted); font-size:12px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--r2);
+      padding:18px;
+      box-shadow: var(--shadow);
+    }
+    .grid{display:grid; gap:14px}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .btn{
+      padding:10px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:700;
+    }
+    .btn:hover{background:rgba(255,255,255,.10)}
+    .btn.primary{
+      border-color:transparent;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+    }
+    .btn:disabled{opacity:.55; cursor:not-allowed}
+    label.btn{display:inline-block}
+    input[type="file"]{display:none}
+    select{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      outline:none;
+    }
+    .meta{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px solid rgba(255,255,255,.10);
+    }
+    .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px;}
+    .kpi{
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:12px;
+    }
+    .kpi b{display:block; font-size:18px; letter-spacing:-.2px}
+    .kpi span{color:var(--muted); font-size:12px}
+    .dot{width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:8px}
+    .dot.critical{background:var(--critical)}
+    .dot.warning{background:var(--warning)}
+    .dot.info{background:var(--info)}
+    .dot.ok{background:var(--ok)}
+    .filters{
+      display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;
+    }
+    .chip{
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.05);
+      color:var(--muted);
+      cursor:pointer;
+      user-select:none;
+      font-size:12px;
+      font-weight:700;
+    }
+    .chip.active{color:var(--text); border-color:rgba(124,92,255,.45); background:rgba(124,92,255,.14)}
+    .issues{margin-top:14px}
+    .issue{
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      border-radius:var(--r);
+      padding:14px;
+      display:grid;
+      gap:8px;
+    }
+    .issue-head{
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;
+    }
+    .sev{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      font-size:12px;
+      font-weight:800;
+    }
+    .sev.critical{border-color:rgba(255,92,122,.45); background:rgba(255,92,122,.12)}
+    .sev.warning{border-color:rgba(255,204,102,.45); background:rgba(255,204,102,.12)}
+    .sev.info{border-color:rgba(124,188,255,.45); background:rgba(124,188,255,.12)}
+    .sev.ok{border-color:rgba(35,213,171,.45); background:rgba(35,213,171,.12)}
+    .rule{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      color:rgba(233,238,255,.78);
+    }
+    .how{
+      color:var(--muted);
+      border-left:3px solid rgba(124,92,255,.45);
+      padding-left:10px;
+      margin-top:2px;
+    }
+    .empty{
+      color:var(--muted);
+      padding:14px;
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:16px;
+      background:rgba(0,0,0,.12);
+    }
+    .two{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:14px;
+      align-items:start;
+    }
+    .small{font-size:12px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    @media (max-width: 900px){
+      .kpis{grid-template-columns:repeat(2,1fr)}
+      .two{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>VerifyFlow</h1>
+        <div class="muted">Проверка DOCX/PDF через FastAPI • отчёт “по-человечески”</div>
+      </div>
+      <div class="pill">API: <span class="mono">localhost:8000</span> • WEB: <span class="mono">localhost:8080</span></div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <label class="btn" for="file">Выбрать файл</label>
+        <input id="file" type="file" accept=".docx,.pdf" />
+        <select id="profile">
+          <option value="vkr_ru">ВКР (RU)</option>
+        </select>
+        <button class="btn primary" id="run" disabled>Проверить</button>
+        <button class="btn" id="clear" disabled>Сброс</button>
+      </div>
+
+      <div class="meta">
+        <div class="muted" id="meta">Файл не выбран.</div>
+        <div class="muted small">Тест API: <a href="http://localhost:8000/docs" target="_blank">/docs</a> • <a href="http://localhost:8000/api/health" target="_blank">/api/health</a></div>
+      </div>
+
+      <div id="reportArea" class="grid" style="margin-top:14px;">
+        <div class="empty">Выбери .docx и нажми “Проверить”, чтобы получить отчёт.</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API_BASE = "http://localhost:8000";
+
+  const fileEl = document.getElementById('file');
+  const runEl = document.getElementById('run');
+  const clearEl = document.getElementById('clear');
+  const metaEl = document.getElementById('meta');
+  const profileEl = document.getElementById('profile');
+  const reportArea = document.getElementById('reportArea');
+
+  let chosen = null;
+  let lastReport = null;
+  let currentFilter = "all";
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function sevLabel(sev){
+    if (sev === "critical") return "Критично";
+    if (sev === "warning") return "Важно";
+    if (sev === "info") return "Инфо";
+    return "Ок";
+  }
+
+  function dotClass(sev){
+    return (sev === "critical" || sev === "warning" || sev === "info") ? sev : "ok";
+  }
+
+  function renderEmpty(text){
+    reportArea.innerHTML = `<div class="empty">${esc(text)}</div>`;
+  }
+
+  function renderLoading(){
+    reportArea.innerHTML = `
+      <div class="empty">
+        Проверяем документ…<br/>
+        <span class="muted small">Это занимает несколько секунд (зависит от размера DOCX).</span>
+      </div>
+    `;
+  }
+
+  function renderReport(report){
+    lastReport = report;
+
+    const s = report.summary || {critical:0, warning:0, info:0, total:0};
+    const detected = report.detected || {};
+    const margins = detected.margins_mm || {};
+    const most = (detected.most_common || {});
+    const issues = Array.isArray(report.issues) ? report.issues : [];
+
+    const total = (s.total ?? issues.length ?? 0);
+
+    // KPIs
+    const kpisHtml = `
+      <div class="kpis">
+        <div class="kpi"><b><span class="dot ${total===0 ? 'ok':'critical'}"></span>${total}</b><span>всего замечаний</span></div>
+        <div class="kpi"><b><span class="dot critical"></span>${s.critical ?? 0}</b><span>критично</span></div>
+        <div class="kpi"><b><span class="dot warning"></span>${s.warning ?? 0}</b><span>важно</span></div>
+        <div class="kpi"><b><span class="dot info"></span>${s.info ?? 0}</b><span>инфо</span></div>
+      </div>
+    `;
+
+    const filtersHtml = `
+      <div class="filters">
+        <div class="chip ${currentFilter==='all'?'active':''}" data-filter="all">Все</div>
+        <div class="chip ${currentFilter==='critical'?'active':''}" data-filter="critical">Критично</div>
+        <div class="chip ${currentFilter==='warning'?'active':''}" data-filter="warning">Важно</div>
+        <div class="chip ${currentFilter==='info'?'active':''}" data-filter="info">Инфо</div>
+      </div>
+    `;
+
+    // Header blocks
+    const leftHtml = `
+      <div class="card" style="box-shadow:none">
+        <div class="pill">Профиль: <b style="color:var(--text)">${esc(report.profile || '—')}</b></div>
+        <div style="margin-top:10px">${kpisHtml}</div>
+        <div style="margin-top:12px" class="muted small">
+          <div><b>Обнаружено (примерно):</b></div>
+          <div>Поля (мм): лев ${margins.left ?? '—'}, прав ${margins.right ?? '—'}, верх ${margins.top ?? '—'}, низ ${margins.bottom ?? '—'}</div>
+          <div>Шрифт: ${esc(most.font_name || '—')}, кегль: ${esc(most.font_size || '—')}, интервал: ${esc(most.line_spacing || '—')}</div>
+        </div>
+        ${filtersHtml}
+      </div>
+    `;
+
+    const rightHtml = `
+      <div class="card" style="box-shadow:none">
+        <b>Что дальше</b>
+        <div class="muted" style="margin-top:6px">
+          • Исправь критичные пункты в первую очередь.<br/>
+          • Лучше править через <b>стили</b> Word, а не вручную по абзацам.<br/>
+          • После правок загрузи документ снова — сравни отчёты.
+        </div>
+        <div style="margin-top:10px" class="pill">Подсказка: тестируй API в <a href="http://localhost:8000/docs" target="_blank">/docs</a></div>
+      </div>
+    `;
+
+    // Issues list
+    const filtered = issues.filter(it => {
+      if (currentFilter === "all") return true;
+      return (it.severity || "").toLowerCase() === currentFilter;
+    });
+
+    let issuesHtml = "";
+    if (issues.length === 0) {
+      issuesHtml = `<div class="empty">Замечаний нет ✅ Документ выглядит корректно по базовым правилам.</div>`;
+    } else if (filtered.length === 0) {
+      issuesHtml = `<div class="empty">По фильтру “${esc(currentFilter)}” замечаний нет.</div>`;
+    } else {
+      issuesHtml = filtered.map((it) => {
+        const sev = (it.severity || "info").toLowerCase();
+        const rule = it.rule ? `<div class="rule">${esc(it.rule)}</div>` : "";
+        const how = it.how_to_fix ? `<div class="how">${esc(it.how_to_fix)}</div>` : "";
+        return `
+          <div class="issue">
+            <div class="issue-head">
+              <div class="sev ${dotClass(sev)}"><span class="dot ${dotClass(sev)}"></span>${sevLabel(sev)}</div>
+              ${rule}
+            </div>
+            <div><b>${esc(it.message || "Замечание")}</b></div>
+            ${how}
+          </div>
+        `;
+      }).join("");
+    }
+
+    reportArea.innerHTML = `
+      <div class="two">
+        ${leftHtml}
+        ${rightHtml}
+      </div>
+
+      <div class="issues grid">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <h2 style="margin:0; font-size:18px; letter-spacing:-.2px">Замечания</h2>
+          <div class="muted small">Показано: ${filtered.length} из ${issues.length}</div>
+        </div>
+        ${issuesHtml}
+      </div>
+
+      <div class="muted small">
+        <div class="pill">Debug: если нужно — можно вывести сырой JSON</div>
+        <details style="margin-top:10px">
+          <summary style="cursor:pointer">Показать сырой JSON</summary>
+          <pre style="margin-top:10px; white-space:pre-wrap; background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.12); padding:14px; border-radius:14px;">${esc(JSON.stringify(report, null, 2))}</pre>
+        </details>
+      </div>
+    `;
+
+    // bind filter chips
+    document.querySelectorAll('[data-filter]').forEach(el => {
+      el.addEventListener('click', () => {
+        currentFilter = el.getAttribute('data-filter');
+        renderReport(lastReport);
+      });
+    });
+  }
+
+  function resetUI(){
+    chosen = null;
+    lastReport = null;
+    currentFilter = "all";
+    runEl.disabled = true;
+    clearEl.disabled = true;
+    metaEl.textContent = "Файл не выбран.";
+    fileEl.value = "";
+    renderEmpty("Выбери .docx или .pdf и нажми “Проверить”, чтобы получить отчёт.");
+  }
+
+  fileEl.addEventListener('change', () => {
+    const f = fileEl.files && fileEl.files[0];
+    if (!f) return;
+
+    const ext = f.name.toLowerCase();
+    if (!ext.endsWith('.docx') && !ext.endsWith('.pdf')) {
+      metaEl.textContent = "Нужен файл .docx или .pdf";
+      renderEmpty("Пожалуйста, выбери файл .docx или .pdf");
+      runEl.disabled = true;
+      clearEl.disabled = false;
+      chosen = null;
+      return;
+    }
+
+    chosen = f;
+    runEl.disabled = false;
+    clearEl.disabled = false;
+    metaEl.textContent = `Выбран: ${f.name} (${Math.round(f.size/1024)} KB)`;
+    renderEmpty("Готово. Нажми “Проверить”, чтобы получить отчёт.");
+  });
+
+  clearEl.addEventListener('click', resetUI);
+
+  runEl.addEventListener('click', async () => {
+    if (!chosen) return;
+
+    runEl.disabled = true;
+    clearEl.disabled = true;
+    renderLoading();
+
+    try {
+      const fd = new FormData();
+      fd.append("file", chosen);
+
+      const profile = profileEl.value;
+      const res = await fetch(`${API_BASE}/api/check?profile=${encodeURIComponent(profile)}`, {
+        method: "POST",
+        body: fd
+      });
+
+      const text = await res.text();
+      if (!res.ok) {
+        renderEmpty(`Ошибка ${res.status}: ${text}`);
+        return;
+      }
+
+      const report = JSON.parse(text);
+      renderReport(report);
+    } catch (e) {
+      renderEmpty(`Ошибка запроса: ${e}`);
+    } finally {
+      runEl.disabled = false;
+      clearEl.disabled = false;
+    }
+  });
+
+  // init
+  resetUI();
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+name: "ВКР (RU) — базовый профиль"
+version: 1
+
+
+title_page_fields:
+  enabled: true
+  severity: warning
+  # Проверяем только "титульную зону" (первые N символов/страниц)
+  title_scope_pages: 1
+  required:
+    - key: "student_fio"
+      hints: ["студент", "обучающийся", "выполнил", "выполнила", "выполнил(а)", "обучающ", "студента"]
+    - key: "topic"
+      hints: ["тема", "на тему"]
+    - key: "supervisor"
+      hints: ["руководитель", "научный руководитель"]
+    - key: "year"
+      hints: ["20"]  # год проверим отдельно
+    - key: "city"
+      hints: ["город", "г.", "москва", "санкт-петербург"]  # эвристика
+
+dates:
+  enabled: true
+  severity: warning
+  allow_year_only: true
+  # если найдём пары "начало/окончание" — проверим порядок
+  range_hints:
+    start: ["начало", "с", "от"]
+    end: ["окончание", "по", "до"]
+
+fio_cases:
+  enabled: true
+  severity: warning
+  contexts:
+    - label: "после 'от студента'"
+      trigger: "от студента"
+      expected_case: "gent"
+    - label: "после 'студента'"
+      trigger: "студента"
+      expected_case: "gent"
+    - label: "после 'руководитель'"
+      trigger: "руководитель"
+      expected_case: "nomn"
+
+formatting_docx:
+  enabled: true
+  severity: warning
+  font:
+    recommended_name: "Times New Roman"
+    min_size_pt: 12
+    color_rgb: "000000"   # чёрный
+  bold:
+    allow_in_headings_only: true
+  italic:
+    warn_if_not_latin: true
+
+margins_docx:
+  enabled: true
+  severity: critical
+  expected_mm:
+    left: 30
+    right: 15
+    top: 20
+    bottom: 20
+  tolerance_mm: 1.5
+
+indent_docx:
+  enabled: true
+  severity: warning
+  first_line_cm: 1.25
+  tolerance_cm: 0.15
+
+# Детальная проверка ФИО обучающегося
+student_fio_detailed:
+  enabled: true
+  severity: critical
+
+# Детальная проверка ФИО руководителя
+supervisor_fio_detailed:
+  enabled: true
+  severity: critical
+
+# Список ФИО, которые нужно игнорировать при проверках (например, тестовые записи)
+ignored_fios:
+  - "И. Н. Обабков"
+
+# Строгая проверка формата дат (ДД.ММ.ГГГГ)
+date_format_strict:
+  enabled: true
+  severity: critical
+
+# Проверка наличия полей для подписей
+signatures:
+  enabled: true
+  severity: critical
+
+# Проверка форматирования текста
+text_formatting:
+  enabled: true
+  severity: warning
+
+# Проверка календарного плана
+calendar_plan:
+  enabled: true
+  severity: critical
+
+# Проверка соответствия темы работы утверждённому образцу
+topic_match:
+  enabled: false  # По умолчанию выключено, т.к. требует список утверждённых тем
+  severity: critical
+  # approved_topics:  # Раскомментируй и добавь список утверждённых тем
+  #   - "Тема работы 1"
+  #   - "Тема работы 2"
+
+# Проверка соответствия содержания пояснительной записки фактическому плану работы
+content_match:
+  enabled: true
+  severity: critical
