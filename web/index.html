@@ -180,7 +180,7 @@
         <h1>VerifyFlow</h1>
         <div class="muted">Проверка DOCX/PDF через FastAPI • отчёт “по-человечески”</div>
       </div>
-      <div class="pill">API: <span class="mono">localhost:8000</span> • WEB: <span class="mono">localhost:8080</span></div>
+      <div class="pill">API: <span class="mono">80.87.103.127:8000</span> • WEB: <span class="mono">80.87.103.127:8080</span></div>
     </div>
 
     <div class="card">
@@ -196,7 +196,7 @@
 
       <div class="meta">
         <div class="muted" id="meta">Файл не выбран.</div>
-        <div class="muted small">Тест API: <a href="http://localhost:8000/docs" target="_blank">/docs</a> • <a href="http://localhost:8000/api/health" target="_blank">/api/health</a></div>
+        <div class="muted small">Тест API: <a href="http://80.87.103.127:8000/docs" target="_blank">/docs</a> • <a href="http://80.87.103.127:8000/api/health" target="_blank">/api/health</a></div>
       </div>
 
       <div id="reportArea" class="grid" style="margin-top:14px;">
@@ -206,7 +206,9 @@
   </div>
 
 <script>
-  const API_BASE = "http://localhost:8000";
+  // const API_BASE = "http://localhost:8000";
+
+  const API_BASE = "http://80.87.103.127:8000";
 
   const fileEl = document.getElementById('file');
   const runEl = document.getElementById('run');
@@ -301,7 +303,7 @@
           • Лучше править через <b>стили</b> Word, а не вручную по абзацам.<br/>
           • После правок загрузи документ снова — сравни отчёты.
         </div>
-        <div style="margin-top:10px" class="pill">Подсказка: тестируй API в <a href="http://localhost:8000/docs" target="_blank">/docs</a></div>
+        <div style="margin-top:10px" class="pill">Подсказка: тестируй API в <a href="http://80.87.103.127:8000/docs" target="_blank">/docs</a></div>
       </div>
     `;
 
