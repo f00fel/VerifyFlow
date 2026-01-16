@@ -1,209 +1,338 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>VerifyFlow — проверка DOCX/PDF</title>
-  <meta name="description" content="VerifyFlow проверяет DOCX/PDF по базовым правилам оформления: сводка, карточки ошибок, рекомендации."/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>VerifyFlow - проверка оформления DOCX/PDF</title>
+  <meta name="description" content="Минималистичный интерфейс для проверки оформления документов DOCX и PDF."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
     :root{
-      --bg:#0b1020;
-      --card:rgba(255,255,255,.06);
-      --line:rgba(255,255,255,.12);
-      --text:#e9eeff;
-      --muted:rgba(233,238,255,.72);
-      --shadow: 0 14px 40px rgba(0,0,0,.35);
-      --r:18px;
-      --r2:22px;
-      --accent:#7c5cff;
-      --accent2:#23d5ab;
-
-      --critical:#ff5c7a;
-      --warning:#ffcc66;
-      --info:#7cbcff;
-      --ok:#23d5ab;
+      --bg:#f7f6f2;
+      --bg-2:#eef1ec;
+      --surface:rgba(255,255,255,0.86);
+      --surface-solid:#ffffff;
+      --line:rgba(11,15,20,0.1);
+      --text:#0b0f14;
+      --muted:rgba(11,15,20,0.62);
+      --shadow:0 18px 50px rgba(11,15,20,0.08);
+      --radius:18px;
+      --radius-lg:24px;
+      --accent:#0f766e;
+      --accent-2:#0ea5e9;
+      --critical:#e11d48;
+      --warning:#f59e0b;
+      --info:#2563eb;
+      --ok:#16a34a;
     }
     *{box-sizing:border-box}
     body{
       margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background:
-        radial-gradient(1200px 700px at 15% 10%, rgba(124,92,255,.25), transparent 60%),
-        radial-gradient(900px 600px at 90% 30%, rgba(35,213,171,.14), transparent 55%),
-        var(--bg);
+      min-height:100vh;
+      font-family:"Instrument Sans","IBM Plex Sans",sans-serif;
       color:var(--text);
+      line-height:1.5;
+      background:
+        radial-gradient(900px 520px at 8% -10%, rgba(14,165,233,0.12), transparent 60%),
+        radial-gradient(700px 500px at 95% 5%, rgba(16,185,129,0.12), transparent 60%),
+        linear-gradient(180deg,var(--bg) 0%,var(--bg-2) 100%);
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(90deg, rgba(11,15,20,0.035) 0 1px, transparent 1px 90px),
+        repeating-linear-gradient(0deg, rgba(11,15,20,0.035) 0 1px, transparent 1px 90px);
+      opacity:0.4;
     }
     a{color:inherit}
-    .wrap{max-width:980px; margin:0 auto; padding:28px;}
-    .top{
-      display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;
-      margin-bottom:14px;
+    h1, h2{
+      font-family:"Space Grotesk","IBM Plex Sans",sans-serif;
     }
-    h1{margin:0; letter-spacing:-.4px}
-    .muted{color:var(--muted)}
+    h1{
+      margin:0;
+      font-size:40px;
+      letter-spacing:-0.8px;
+    }
+    h2{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-0.2px;
+    }
+    .wrap{
+      max-width:1040px;
+      margin:0 auto;
+      padding:36px 28px 64px;
+      position:relative;
+      z-index:1;
+    }
+    .top{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:20px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .subtitle{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:16px;
+    }
     .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:7px 10px; border-radius:999px;
-      background:rgba(255,255,255,.06); border:1px solid var(--line);
-      color:var(--muted); font-size:12px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,0.6);
+      font-size:12px;
+      color:var(--muted);
     }
     .card{
-      background:var(--card);
+      background:var(--surface);
       border:1px solid var(--line);
-      border-radius:var(--r2);
-      padding:18px;
-      box-shadow: var(--shadow);
+      border-radius:var(--radius-lg);
+      padding:20px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(6px);
     }
-    .grid{display:grid; gap:14px}
-    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .subcard{
+      box-shadow:none;
+      background:rgba(255,255,255,0.82);
+    }
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
     .btn{
       padding:10px 14px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.15);
-      background:rgba(255,255,255,.06);
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:var(--surface-solid);
       color:var(--text);
       cursor:pointer;
-      font-weight:700;
+      font-weight:600;
+      font-family:"Space Grotesk","IBM Plex Sans",sans-serif;
+      transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
     }
-    .btn:hover{background:rgba(255,255,255,.10)}
+    .btn:hover{transform:translateY(-1px); box-shadow:0 10px 24px rgba(11,15,20,0.08);}
     .btn.primary{
       border-color:transparent;
-      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      color:#fff;
     }
-    .btn:disabled{opacity:.55; cursor:not-allowed}
+    .btn:disabled{opacity:.55; cursor:not-allowed; box-shadow:none; transform:none}
     label.btn{display:inline-block}
     input[type="file"]{display:none}
     select{
       padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.15);
-      background:rgba(255,255,255,.06);
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:var(--surface-solid);
       color:var(--text);
       outline:none;
+      font-weight:600;
     }
     .meta{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-      margin-top:10px;
-      padding-top:10px;
-      border-top:1px solid rgba(255,255,255,.10);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      margin-top:12px;
+      padding-top:12px;
+      border-top:1px solid var(--line);
     }
-    .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px;}
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .grid{display:grid; gap:14px}
+    .two{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:14px;
+      align-items:start;
+    }
+    .section-title{
+      font-weight:700;
+      margin-bottom:10px;
+    }
+    .kpis{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      margin-top:12px;
+    }
     .kpi{
-      background:rgba(0,0,0,.18);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:16px;
+      background:rgba(255,255,255,0.9);
+      border:1px solid var(--line);
+      border-radius:14px;
       padding:12px;
     }
-    .kpi b{display:block; font-size:18px; letter-spacing:-.2px}
-    .kpi span{color:var(--muted); font-size:12px}
-    .dot{width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:8px}
+    .kpi b{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:18px;
+      letter-spacing:-0.2px;
+    }
+    .kpi span{
+      display:block;
+      margin-top:4px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      display:inline-block;
+    }
     .dot.critical{background:var(--critical)}
     .dot.warning{background:var(--warning)}
     .dot.info{background:var(--info)}
     .dot.ok{background:var(--ok)}
     .filters{
-      display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:12px;
     }
     .chip{
-      padding:8px 10px;
+      padding:7px 10px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      background:rgba(255,255,255,0.8);
       color:var(--muted);
       cursor:pointer;
       user-select:none;
       font-size:12px;
       font-weight:700;
     }
-    .chip.active{color:var(--text); border-color:rgba(124,92,255,.45); background:rgba(124,92,255,.14)}
+    .chip.active{
+      color:var(--text);
+      border-color:rgba(15,118,110,0.4);
+      background:rgba(15,118,110,0.12);
+    }
     .issues{margin-top:14px}
     .issue{
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.18);
-      border-radius:var(--r);
+      border:1px solid var(--line);
+      background:rgba(255,255,255,0.92);
+      border-radius:var(--radius);
       padding:14px;
       display:grid;
       gap:8px;
+      animation:fadeUp .45s ease both;
     }
     .issue-head{
-      display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+      flex-wrap:wrap;
     }
     .sev{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:6px 10px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:5px 10px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
+      border:1px solid var(--line);
       font-size:12px;
-      font-weight:800;
+      font-weight:700;
     }
-    .sev.critical{border-color:rgba(255,92,122,.45); background:rgba(255,92,122,.12)}
-    .sev.warning{border-color:rgba(255,204,102,.45); background:rgba(255,204,102,.12)}
-    .sev.info{border-color:rgba(124,188,255,.45); background:rgba(124,188,255,.12)}
-    .sev.ok{border-color:rgba(35,213,171,.45); background:rgba(35,213,171,.12)}
+    .sev.critical{border-color:rgba(225,29,72,0.35); background:rgba(225,29,72,0.12)}
+    .sev.warning{border-color:rgba(245,158,11,0.35); background:rgba(245,158,11,0.12)}
+    .sev.info{border-color:rgba(37,99,235,0.35); background:rgba(37,99,235,0.12)}
+    .sev.ok{border-color:rgba(22,163,74,0.35); background:rgba(22,163,74,0.12)}
     .rule{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size:12px;
-      color:rgba(233,238,255,.78);
+      color:rgba(11,15,20,0.7);
     }
     .how{
       color:var(--muted);
-      border-left:3px solid rgba(124,92,255,.45);
+      border-left:2px solid rgba(15,118,110,0.4);
       padding-left:10px;
       margin-top:2px;
     }
     .empty{
       color:var(--muted);
-      padding:14px;
-      border:1px dashed rgba(255,255,255,.18);
+      padding:16px;
+      border:1px dashed var(--line);
       border-radius:16px;
-      background:rgba(0,0,0,.12);
+      background:rgba(255,255,255,0.7);
     }
-    .two{
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap:14px;
-      align-items:start;
+    details{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px 14px;
+      background:rgba(255,255,255,0.75);
     }
-    .small{font-size:12px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    summary{cursor:pointer}
+    pre{
+      margin-top:10px;
+      white-space:pre-wrap;
+      background:rgba(11,15,20,0.04);
+      border:1px solid var(--line);
+      padding:12px;
+      border-radius:12px;
+      font-size:12px;
+    }
+    .reveal{
+      animation:fadeUp .6s ease both;
+    }
+    @keyframes fadeUp{
+      from{opacity:0; transform:translateY(8px)}
+      to{opacity:1; transform:translateY(0)}
+    }
     @media (max-width: 900px){
+      h1{font-size:34px}
       .kpis{grid-template-columns:repeat(2,1fr)}
       .two{grid-template-columns:1fr}
+    }
+    @media (prefers-reduced-motion: reduce){
+      *{animation:none !important; transition:none !important}
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="top">
+  <main class="wrap">
+    <div class="top reveal">
       <div>
         <h1>VerifyFlow</h1>
-        <div class="muted">Проверка DOCX/PDF через FastAPI • отчёт “по-человечески”</div>
+        <div class="subtitle">Проверка оформления документов DOCX и PDF</div>
       </div>
-      <div class="pill">API: <span class="mono">localhost:8000</span> • WEB: <span class="mono">localhost:8080</span></div>
     </div>
 
-    <div class="card">
-      <div class="row">
+    <section class="card reveal">
+      <div class="toolbar">
         <label class="btn" for="file">Выбрать файл</label>
-        <input id="file" type="file" accept=".docx,.pdf" />
+        <input id="file" type="file" accept=".docx,.pdf"/>
         <select id="profile">
           <option value="vkr_ru">ВКР (RU)</option>
         </select>
         <button class="btn primary" id="run" disabled>Проверить</button>
-        <button class="btn" id="clear" disabled>Сброс</button>
+        <button class="btn" id="clear" disabled>Сбросить</button>
       </div>
 
       <div class="meta">
         <div class="muted" id="meta">Файл не выбран.</div>
-        <div class="muted small">Тест API: <a href="http://localhost:8000/docs" target="_blank">/docs</a> • <a href="http://localhost:8000/api/health" target="_blank">/api/health</a></div>
+        <div class="muted small">Допустимые форматы: .docx, .pdf</div>
       </div>
 
-      <div id="reportArea" class="grid" style="margin-top:14px;">
-        <div class="empty">Выбери .docx и нажми “Проверить”, чтобы получить отчёт.</div>
+      <div id="reportArea" class="grid" style="margin-top:16px;">
+        <div class="empty">Загрузите документ и нажмите "Проверить".</div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
 <script>
   const API_BASE = "http://localhost:8000";
@@ -227,9 +356,9 @@
 
   function sevLabel(sev){
     if (sev === "critical") return "Критично";
-    if (sev === "warning") return "Важно";
-    if (sev === "info") return "Инфо";
-    return "Ок";
+    if (sev === "warning") return "Предупреждение";
+    if (sev === "info") return "Информация";
+    return "ОК";
   }
 
   function dotClass(sev){
@@ -243,8 +372,8 @@
   function renderLoading(){
     reportArea.innerHTML = `
       <div class="empty">
-        Проверяем документ…<br/>
-        <span class="muted small">Это занимает несколько секунд (зависит от размера DOCX).</span>
+        Проверяем документ...<br/>
+        <span class="muted small">Для больших файлов потребуется несколько секунд.</span>
       </div>
     `;
   }
@@ -257,55 +386,47 @@
     const margins = detected.margins_mm || {};
     const most = (detected.most_common || {});
     const issues = Array.isArray(report.issues) ? report.issues : [];
+    const na = "нет";
 
     const total = (s.total ?? issues.length ?? 0);
 
-    // KPIs
     const kpisHtml = `
       <div class="kpis">
-        <div class="kpi"><b><span class="dot ${total===0 ? 'ok':'critical'}"></span>${total}</b><span>всего замечаний</span></div>
-        <div class="kpi"><b><span class="dot critical"></span>${s.critical ?? 0}</b><span>критично</span></div>
-        <div class="kpi"><b><span class="dot warning"></span>${s.warning ?? 0}</b><span>важно</span></div>
-        <div class="kpi"><b><span class="dot info"></span>${s.info ?? 0}</b><span>инфо</span></div>
+        <div class="kpi"><b><span class="dot ${total===0 ? 'ok':'critical'}"></span>${total}</b><span>Нарушений</span></div>
+        <div class="kpi"><b><span class="dot critical"></span>${s.critical ?? 0}</b><span>Критичных</span></div>
+        <div class="kpi"><b><span class="dot warning"></span>${s.warning ?? 0}</b><span>Предупреждений</span></div>
+        <div class="kpi"><b><span class="dot info"></span>${s.info ?? 0}</b><span>Инфо</span></div>
       </div>
     `;
 
     const filtersHtml = `
       <div class="filters">
         <div class="chip ${currentFilter==='all'?'active':''}" data-filter="all">Все</div>
-        <div class="chip ${currentFilter==='critical'?'active':''}" data-filter="critical">Критично</div>
-        <div class="chip ${currentFilter==='warning'?'active':''}" data-filter="warning">Важно</div>
+        <div class="chip ${currentFilter==='critical'?'active':''}" data-filter="critical">Критичные</div>
+        <div class="chip ${currentFilter==='warning'?'active':''}" data-filter="warning">Предупреждения</div>
         <div class="chip ${currentFilter==='info'?'active':''}" data-filter="info">Инфо</div>
       </div>
     `;
 
-    // Header blocks
     const leftHtml = `
-      <div class="card" style="box-shadow:none">
-        <div class="pill">Профиль: <b style="color:var(--text)">${esc(report.profile || '—')}</b></div>
-        <div style="margin-top:10px">${kpisHtml}</div>
-        <div style="margin-top:12px" class="muted small">
-          <div><b>Обнаружено (примерно):</b></div>
-          <div>Поля (мм): лев ${margins.left ?? '—'}, прав ${margins.right ?? '—'}, верх ${margins.top ?? '—'}, низ ${margins.bottom ?? '—'}</div>
-          <div>Шрифт: ${esc(most.font_name || '—')}, кегль: ${esc(most.font_size || '—')}, интервал: ${esc(most.line_spacing || '—')}</div>
-        </div>
+      <div class="card subcard">
+        <div class="section-title">Сводка</div>
+        <div class="pill">Профиль: <b style="color:var(--text)">${esc(report.profile || na)}</b></div>
+        ${kpisHtml}
         ${filtersHtml}
       </div>
     `;
 
     const rightHtml = `
-      <div class="card" style="box-shadow:none">
-        <b>Что дальше</b>
-        <div class="muted" style="margin-top:6px">
-          • Исправь критичные пункты в первую очередь.<br/>
-          • Лучше править через <b>стили</b> Word, а не вручную по абзацам.<br/>
-          • После правок загрузи документ снова — сравни отчёты.
+      <div class="card subcard">
+        <div class="section-title">Параметры документа</div>
+        <div class="muted small">
+          <div><b>Поля (мм):</b> слева ${margins.left ?? na}, справа ${margins.right ?? na}, сверху ${margins.top ?? na}, снизу ${margins.bottom ?? na}</div>
+          <div><b>Шрифт:</b> ${esc(most.font_name || na)}, размер ${esc(most.font_size || na)}, межстрочный ${esc(most.line_spacing || na)}</div>
         </div>
-        <div style="margin-top:10px" class="pill">Подсказка: тестируй API в <a href="http://localhost:8000/docs" target="_blank">/docs</a></div>
       </div>
     `;
 
-    // Issues list
     const filtered = issues.filter(it => {
       if (currentFilter === "all") return true;
       return (it.severity || "").toLowerCase() === currentFilter;
@@ -313,21 +434,23 @@
 
     let issuesHtml = "";
     if (issues.length === 0) {
-      issuesHtml = `<div class="empty">Замечаний нет ✅ Документ выглядит корректно по базовым правилам.</div>`;
+      issuesHtml = `<div class="empty">Нарушений не найдено.</div>`;
     } else if (filtered.length === 0) {
-      issuesHtml = `<div class="empty">По фильтру “${esc(currentFilter)}” замечаний нет.</div>`;
+      const labelMap = {critical:"Критичные", warning:"Предупреждения", info:"Инфо"};
+      const label = labelMap[currentFilter] || "Все";
+      issuesHtml = `<div class="empty">Нет нарушений для фильтра "${label}".</div>`;
     } else {
-      issuesHtml = filtered.map((it) => {
+      issuesHtml = filtered.map((it, index) => {
         const sev = (it.severity || "info").toLowerCase();
         const rule = it.rule ? `<div class="rule">${esc(it.rule)}</div>` : "";
         const how = it.how_to_fix ? `<div class="how">${esc(it.how_to_fix)}</div>` : "";
         return `
-          <div class="issue">
+          <div class="issue" style="animation-delay:${index * 60}ms">
             <div class="issue-head">
               <div class="sev ${dotClass(sev)}"><span class="dot ${dotClass(sev)}"></span>${sevLabel(sev)}</div>
               ${rule}
             </div>
-            <div><b>${esc(it.message || "Замечание")}</b></div>
+            <div><b>${esc(it.message || "Нарушение")}</b></div>
             ${how}
           </div>
         `;
@@ -342,22 +465,18 @@
 
       <div class="issues grid">
         <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-          <h2 style="margin:0; font-size:18px; letter-spacing:-.2px">Замечания</h2>
+          <h2>Нарушения</h2>
           <div class="muted small">Показано: ${filtered.length} из ${issues.length}</div>
         </div>
         ${issuesHtml}
       </div>
 
-      <div class="muted small">
-        <div class="pill">Debug: если нужно — можно вывести сырой JSON</div>
-        <details style="margin-top:10px">
-          <summary style="cursor:pointer">Показать сырой JSON</summary>
-          <pre style="margin-top:10px; white-space:pre-wrap; background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.12); padding:14px; border-radius:14px;">${esc(JSON.stringify(report, null, 2))}</pre>
-        </details>
-      </div>
+      <details class="small">
+        <summary>Данные ответа (JSON)</summary>
+        <pre>${esc(JSON.stringify(report, null, 2))}</pre>
+      </details>
     `;
 
-    // bind filter chips
     document.querySelectorAll('[data-filter]').forEach(el => {
       el.addEventListener('click', () => {
         currentFilter = el.getAttribute('data-filter');
@@ -374,7 +493,7 @@
     clearEl.disabled = true;
     metaEl.textContent = "Файл не выбран.";
     fileEl.value = "";
-    renderEmpty("Выбери .docx или .pdf и нажми “Проверить”, чтобы получить отчёт.");
+    renderEmpty("Загрузите документ и нажмите \"Проверить\".");
   }
 
   fileEl.addEventListener('change', () => {
@@ -383,8 +502,8 @@
 
     const ext = f.name.toLowerCase();
     if (!ext.endsWith('.docx') && !ext.endsWith('.pdf')) {
-      metaEl.textContent = "Нужен файл .docx или .pdf";
-      renderEmpty("Пожалуйста, выбери файл .docx или .pdf");
+      metaEl.textContent = "Выберите файл .docx или .pdf.";
+      renderEmpty("Неверный формат. Поддерживаются .docx и .pdf.");
       runEl.disabled = true;
       clearEl.disabled = false;
       chosen = null;
@@ -394,8 +513,8 @@
     chosen = f;
     runEl.disabled = false;
     clearEl.disabled = false;
-    metaEl.textContent = `Выбран: ${f.name} (${Math.round(f.size/1024)} KB)`;
-    renderEmpty("Готово. Нажми “Проверить”, чтобы получить отчёт.");
+    metaEl.textContent = `Выбран файл: ${f.name} (${Math.round(f.size/1024)} KB)`;
+    renderEmpty("Файл готов к проверке. Нажмите \"Проверить\".");
   });
 
   clearEl.addEventListener('click', resetUI);
@@ -426,14 +545,13 @@
       const report = JSON.parse(text);
       renderReport(report);
     } catch (e) {
-      renderEmpty(`Ошибка запроса: ${e}`);
+      renderEmpty(`Ошибка соединения: ${e}`);
     } finally {
       runEl.disabled = false;
       clearEl.disabled = false;
     }
   });
 
-  // init
   resetUI();
 </script>
 </body>
