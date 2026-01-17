@@ -6,12 +6,11 @@ services:
 
   web:
     image: nginx:alpine
+    volumes:
+      - ./web/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./web:/usr/share/nginx/html:ro
-      - /etc/letsencrypt/live/verifyflowdocs.ru:/certs:ro  # Сертификаты
-      - ./web/nginx.conf:/etc/nginx/conf.d/default.conf:ro  # Конфиг
     depends_on:
       - api
