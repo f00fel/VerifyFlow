@@ -8,6 +8,7 @@ services:
     image: nginx:alpine
     volumes:
       - ./web/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./web:/usr/share/nginx/html:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
     ports:
       - "80:80"
