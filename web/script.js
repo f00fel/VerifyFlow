@@ -1,4 +1,4 @@
-const API_BASE = "http://80.87.103.127:8000";
+const API_BASE = "/api";
 
 const fileEl = document.getElementById('file');
 const runEl = document.getElementById('run');
@@ -194,7 +194,7 @@ runEl.addEventListener('click', async () => {
     fd.append("file", chosen);
 
     const profile = profileEl.value;
-    const res = await fetch(`${API_BASE}/api/check?profile=${encodeURIComponent(profile)}`, {
+    const res = await fetch(`${API_BASE}/check?profile=${encodeURIComponent(profile)}`, {
       method: "POST",
       body: fd
     });
