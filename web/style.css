@@ -290,3 +290,42 @@ pre{
 @media (prefers-reduced-motion: reduce){
   *{animation:none !important; transition:none !important}
 }
+
+/* Стили для комментариев */
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comment-item {
+  padding: 12px;
+  background: rgba(15, 118, 110, 0.05);
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  border-radius: 12px;
+  font-size: 14px;
+  position: relative;
+  animation: fadeUp 0.3s ease;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.comment-text {
+  line-height: 1.5;
+}
+
+.comment-timestamp {
+  font-size: 11px;
+}
+
+/* Анимация для новых комментариев */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -116,3 +116,9 @@ topic_match:
 content_match:
   enabled: true
   severity: critical
+
+# Проверка номера приказа/распоряжения
+order_number_check:
+  enabled: true
+  severity: critical
+  description: "Поиск номера приказа/распоряжения в тексте документа"
