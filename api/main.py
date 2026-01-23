@@ -20,7 +20,6 @@ import fitz  # PyMuPDF
 
 from natasha import Segmenter, NewsEmbedding, NewsNERTagger, Doc as NatashaDoc
 import pymorphy2
-
 app = FastAPI(title="VerifyFlow — VKR checker (DOCX/PDF)")
 
 app.add_middleware(
@@ -157,6 +156,90 @@ def extract_docx(data: bytes) -> DocumentModel:
         }
     )
 
+
+def rule_order_number_check(dm: DocumentModel, profile: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Проверяет наличие номера приказа/распоряжения ВНУТРИ документа.
+    Специально для формата: № 33.02-05/334
+    """
+    cfg = profile.get("order_number_in_doc") or {}
+    if not cfg.get("enabled", True):
+        return []
+    
+    sev = cfg.get("severity", "critical")
+    issues: List[Dict[str, Any]] = []
+    
+    text = dm.text
+    
+    # Ищем номер приказа в формате 33.02-05/334
+    patterns = [
+        # Ваш точный формат
+        r'№\s*(\d{2}\.\d{2}-\d{2}/\d{3})',
+        r'[Nn]\s*(\d{2}\.\d{2}-\d{2}/\d{3})',
+        r'номер[^:№]*[:№\s]+(\d{2}\.\d{2}-\d{2}/\d{3})',
+        
+        # Более общие паттерны
+        r'приказ[аом]?\s*(?:от)?[^№]*№\s*([\d\.\-/]+)',
+        r'распоряжением[^№]*№\s*([\d\.\-/]+)',
+        r'№\s*([\d\.\-/]{5,})',  # любой номер длиной от 5 символов
+    ]
+    
+    found = False
+    found_number = None
+    evidence = ""
+    
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            found = True
+            found_number = match.group(1).strip()
+            
+            # Получаем контекст для отображения
+            start = max(0, match.start() - 50)
+            end = min(len(text), match.end() + 50)
+            evidence = text[start:end].replace('\n', ' ').strip()
+            
+            # Убираем лишние пробелы
+            evidence = '...' + evidence + '...'
+            break
+    
+    if not found:
+        issues.append({
+            "severity": sev,
+            "type": "formal",
+            "rule": "OrderNumber.MissingInDoc",
+            "message": "Не найден номер приказа/распоряжения в тексте документа",
+            "evidence": "Документ не содержит номера приказа в формате '№ 33.02-05/334' или подобном",
+            "location": "document",
+            "how_to_fix": "Добавьте номер приказа в формате: '№ 33.02-05/334', 'Приказ №123/2024' или аналогичный. Обычно размещается в шапке документа.",
+        })
+    else:
+        # ПРОВЕРЯЕМ КОРРЕКТНОСТЬ НОМЕРА - ИСПРАВЛЕННЫЙ КОД
+        # Правильный формат: цифры.цифры-цифры/цифры
+        if not re.match(r'^\d{2}\.\d{2}-\d{2}/\d{3}$', found_number):
+            # Если содержит буквы - критическая ошибка
+            if re.search(r'[a-zA-Zа-яА-Я]', found_number):
+                issues.append({
+                    "severity": "critical",
+                    "type": "formal",
+                    "rule": "OrderNumber.InvalidFormat",
+                    "message": f"Номер приказа содержит недопустимые символы (буквы): '{found_number}'",
+                    "evidence": evidence,
+                    "location": "document",
+                    "how_to_fix": "Номер приказа должен содержать только цифры, точки, тире и слэш. Исправьте: '33.02-05/abc' → '33.02-05/334'",
+                })
+            else:
+                issues.append({
+                    "severity": "warning",
+                    "type": "formal",
+                    "rule": "OrderNumber.FormatWarning",
+                    "message": f"Найденный номер приказа имеет нестандартный формат: '{found_number}'",
+                    "evidence": evidence,
+                    "location": "document",
+                    "how_to_fix": "Рекомендуемый формат: 'XX.XX-XX/XXX' (например, 33.02-05/334). Если это корректный номер, можете проигнорировать это предупреждение.",
+                })
+    
+    return issues
 
 def extract_pdf(data: bytes) -> DocumentModel:
     doc = fitz.open(stream=data, filetype="pdf")
@@ -1657,7 +1740,7 @@ def run_all_rules(dm: DocumentModel, profile: Dict[str, Any]) -> Dict[str, Any]:
     issues += rule_indent_docx(dm, profile)
     # formatting checks for DOCX (kept minimal: bold in body and italic without latin)
     issues += rule_formatting_docx(dm, profile)
-
+    issues += rule_order_number_check(dm, profile)
     def cnt(s: str) -> int:
         return sum(1 for it in issues if (it.get("severity") or "").lower() == s)
 
@@ -1687,6 +1770,21 @@ def run_all_rules(dm: DocumentModel, profile: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # ----------------------- API -----------------------
+
+@app.get("/")
+def read_root():
+    return {
+        "app": "VerifyFlow — VKR checker (DOCX/PDF)",
+        "version": "1.0",
+        "endpoints": {
+            "root": "/",
+            "health": "/api/health",
+            "check": "/api/check (POST)",
+            "docs": "/docs",
+            "redoc": "/redoc"
+        },
+        "message": "Загрузите DOCX/PDF файл через POST /api/check?profile=vkr_ru"
+    }
 
 @app.get("/api/health")
 def health():

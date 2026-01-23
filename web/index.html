@@ -27,6 +27,7 @@
         <select id="profile">
           <option value="vkr_ru">ВКР</option>
         </select>
+
         <button class="btn primary" id="run" disabled>Проверить</button>
         <button class="btn" id="clear" disabled>Сбросить</button>
       </div>
@@ -38,6 +39,23 @@
 
       <div id="reportArea" class="grid" style="margin-top:16px;">
         <div class="empty">Загрузите документ и нажмите "Проверить".</div>
+      </div>
+
+      <!-- Новый блок для комментариев и скачивания -->
+      <div id="commentSection" class="card subcard" style="display: none; margin-top: 20px;">
+        <div class="section-title">Комментарии к проверке</div>
+        
+        <div id="commentsList" class="comments-list" style="margin-bottom: 16px;">
+          <!-- Сюда будут добавляться комментарии -->
+        </div>
+        
+        <div class="toolbar" style="border-top: 1px solid var(--line); padding-top: 16px;">
+          <textarea id="newComment" placeholder="Добавьте комментарий к результатам проверки..." 
+                    style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--line); 
+                          font-family: inherit; font-size: 14px; min-height: 80px;"></textarea>
+          <button class="btn" id="addCommentBtn" style="align-self: flex-end;">Добавить</button>
+          <button class="btn primary" id="downloadReportBtn">Скачать отчёт с комментариями</button>
+        </div>
       </div>
     </section>
   </main>
