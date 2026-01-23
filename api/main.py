@@ -1771,6 +1771,21 @@ def run_all_rules(dm: DocumentModel, profile: Dict[str, Any]) -> Dict[str, Any]:
 
 # ----------------------- API -----------------------
 
+@app.get("/")
+def read_root():
+    return {
+        "app": "VerifyFlow — VKR checker (DOCX/PDF)",
+        "version": "1.0",
+        "endpoints": {
+            "root": "/",
+            "health": "/api/health",
+            "check": "/api/check (POST)",
+            "docs": "/docs",
+            "redoc": "/redoc"
+        },
+        "message": "Загрузите DOCX/PDF файл через POST /api/check?profile=vkr_ru"
+    }
+
 @app.get("/api/health")
 def health():
     return {"ok": True}

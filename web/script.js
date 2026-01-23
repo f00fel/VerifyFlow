@@ -1,4 +1,3 @@
-//python main.pyconst API_BASE = "/api";
 const API_BASE = "/api";
 //const API_BASE = "http://localhost:5000/api";
 const fileEl = document.getElementById('file');
@@ -10,8 +9,6 @@ const reportArea = document.getElementById('reportArea');
 
 let chosen = null;
 let lastReport = null;
-
-// ==================== ЧАСТЬ 1: КОММЕНТАРИИ И СКАЧИВАНИЕ ====================
 
 let comments = []; // Массив для хранения комментариев
 const commentSection = document.createElement('div'); // Создадим элемент динамически
@@ -92,7 +89,6 @@ function downloadReportWithComments() {
   reportContent += `Предупреждений: ${s.warning || 0}\n`;
   reportContent += `Информационных: ${s.info || 0}\n\n`;
   
-  // НОВОЕ: Добавляем сводку по местоположениям
   reportContent += `РАСПРЕДЕЛЕНИЕ ОШИБОК ПО ДОКУМЕНТУ:\n`;
   reportContent += `${'─'.repeat(40)}\n`;
   
@@ -118,16 +114,19 @@ function downloadReportWithComments() {
   });
   
   if (Object.keys(locationCounts).length > 0) {
-    Object.entries(locationCounts).forEach(([loc, count]) => {
-      reportContent += `• ${loc}: ${count} ошибок\n`;
-    });
+      Object.entries(locationCounts).forEach(([loc, count]) => {
+        reportContent += `• ${loc}: ${count} ошибок\n`;
+      });
   } else {
-    reportContent += `Ошибки распределены по всему документу\n`;
+      if (issues.length === 0) {
+          reportContent += `✓ Все проверки пройдены успешно — ошибки отсутствуют\n`;
+      } else {
+          reportContent += `✓ Все проверки пройдены успешно\n`;
+      }
   }
   
   reportContent += `\n${'='.repeat(60)}\n\n`;
   
-  // Нарушения с ПОДРОБНЫМИ подсказками
   if (issues.length > 0) {
     reportContent += `ПОДРОБНЫЙ СПИСОК НАРУШЕНИЙ:\n`;
     reportContent += `${'─'.repeat(40)}\n\n`;
@@ -323,7 +322,23 @@ function getLocationSummary(issues) {
   });
   
   if (Object.keys(locationCounts).length === 0) {
-    return '<span style="color: var(--ok);">Ошибки распределены по всему документу</span>';
+    return `
+      <div style="
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: rgba(34, 197, 94, 0.1);
+        border-radius: 12px;
+        color: var(--ok);
+        font-size: 13px;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        margin-top: 4px;
+      ">
+        <span style="font-size: 16px;">✓</span>
+        <span>Все проверки пройдены, ошибки отсутствуют</span>
+      </div>
+    `;
   }
   
   const items = Object.entries(locationCounts)
